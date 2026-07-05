@@ -3,6 +3,7 @@ Base Glean API client — handles auth headers and base URL construction.
 """
 
 import os
+import sys
 import httpx
 from dotenv import load_dotenv
 
@@ -20,7 +21,7 @@ CLIENT_BASE = f"{BACKEND_URL}/rest/api/v1"
 
 TIMEOUT = httpx.Timeout(60.0)
 
-print(f"Using Glean API backend: {BACKEND_URL}")
+print(f"Using Glean API backend: {BACKEND_URL}", file=sys.stderr)
 
 
 def indexing_headers() -> dict:

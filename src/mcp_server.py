@@ -200,19 +200,9 @@ async def handle(request: Dict) -> Optional[str]:
 # ── Main stdio loop ───────────────────────────────────────────────────────────
 
 async def main():
-    reader = asyncio.StreamReader()
-    protocol = asyncio.StreamReaderProtocol(reader)
-    loop = asyncio.get_event_loop()
-    await loop.connect_read_pipe(lambda: protocol, sys.stdin.buffer)
-
-    transport, _ = await loop.connect_write_pipe(asyncio.BaseProtocol, sys.stdout.buffer)
-
-    def write(data: str):
-        transport.write((data + "\n").encode())
-
     while True:
         try:
-            line = await reader.readline()
+            line = sys.stdin.buffer.readline()
             if not line:
                 break
             line = line.strip()
@@ -221,11 +211,11 @@ async def main():
             request = json.loads(line)
             response = await handle(request)
             if response is not None:
-                write(response)
+                print(response, flush=True)
         except json.JSONDecodeError:
             pass
         except Exception as exc:
-            write(_err(None, -32603, str(exc)))
+            print(_err(None, -32603, str(exc)), flush=True)
 
 
 if __name__ == "__main__":
