@@ -1,180 +1,303 @@
-# Glean Enterprise Chatbot
+# Glean Knowledge Console
 
-An end-to-end prototype that indexes internal documents into Glean, verifies searchability, and answers employee questions through a grounded AI chat interface — exposed via both a web UI and an MCP server.
+An end-to-end sandbox app that indexes local documents into Glean, searches the Glean index, answers grounded questions with Glean Chat, and exposes the same chatbot through a local MCP server for GitHub Copilot in VS Code.
 
----
+## What It Includes
+
+- React + Vite frontend with Chat, Search, and Index views
+- FastAPI backend with REST endpoints for indexing, search, chat, and status checks
+- Direct Glean API integration through `httpx`
+- TXT and PDF indexing support
+- Local stdio MCP server with two tools:
+  - `glean_search`
+  - `glean_chat`
+- Workspace MCP config for GitHub Copilot: `.vscode/mcp.json`
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Web Browser (UI)                    │
-│          Chat · Search · Index tabs                     │
-└────────────────────┬────────────────────────────────────┘
-                     │ HTTP
-┌────────────────────▼────────────────────────────────────┐
-│              FastAPI Web Server (run.py)                 │
-│  POST /api/index   POST /api/search   POST /api/chat    │
-└────┬───────────────┬────────────────────┬───────────────┘
-     │               │                    │
-┌────▼────┐   ┌──────▼──────┐   ┌────────▼────────┐
-│ Indexer │   │   Searcher  │   │   Chat Client   │
-│indexer.py│  │ searcher.py │   │    chat.py      │
-└────┬────┘   └──────┬──────┘   └────────┬────────┘
-     │               │                    │
-     └───────────────┼────────────────────┘
-                     │ HTTPS
-          ┌──────────▼──────────┐
-          │   Glean APIs        │
-          │  Indexing API       │
-          │  Search API         │
-          │  Chat API           │
-          └─────────────────────┘
+```text
+React UI
+  Chat | Search | Index
+        |
+        v
+FastAPI backend
+  /api/index
+  /api/index/status
+  /api/search
+  /api/chat
+        |
+        v
+Glean APIs
+  Indexing API
+  Search API
+  Chat API
 
-┌─────────────────────────────────┐
-│   MCP Server (mcp_server.py)    │  ← stdio, for Cursor / Claude Desktop
-│   Tools: glean_search           │
-│          glean_chat             │
-└─────────────────────────────────┘
+MCP-compatible client
+  GitHub Copilot in VS Code
+        |
+        v
+src/mcp_server.py
+  glean_search
+  glean_chat
 ```
-
----
 
 ## Setup
 
-### 1. Install dependencies
+Install Python dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure credentials
+Install frontend dependencies:
 
-The `.env` file is pre-filled with sandbox credentials:
-
+```bash
+cd frontend
+npm install
 ```
-GLEAN_COMPANY=sasandbox
+
+Create or update `.env` in the project root:
+
+```env
+GLEAN_COMPANY=aws-sasandbox-be
 GLEAN_DATASOURCE=interviewds
-GLEAN_INDEXING_TOKEN=<token>
-GLEAN_CLIENT_TOKEN=<token>
+GLEAN_INDEXING_TOKEN=<indexing-token>
+GLEAN_CLIENT_TOKEN=<client-token>
+GLEAN_DOCUMENT_BASE_URL=https://www.example.com/docs
 ```
 
-### 3. Run the web app
+`GLEAN_DOCUMENT_BASE_URL` must match the URL regex configured on the Glean datasource. For the current sandbox error pattern, `https://www.example.com/docs` is valid.
+
+## Run The App
+
+Build the React frontend:
+
+```bash
+cd frontend
+npm run build
+cd ..
+```
+
+Start the FastAPI app:
 
 ```bash
 python run.py
 ```
 
-Open **http://localhost:8000** in your browser.
+Open:
 
----
+```text
+http://127.0.0.1:8000
+```
+
+During active frontend development, you can run Vite separately:
+
+```bash
+cd frontend
+npm run dev
+```
+
+The Vite dev server proxies `/api/*` to the FastAPI backend.
+
+## Documents
+
+Documents are loaded from the `documents/` folder.
+
+Supported file types:
+
+| Type | Glean payload |
+|------|---------------|
+| `.txt` | `mimeType: text/plain`, `textContent` |
+| `.pdf` | `mimeType: application/pdf`, base64 `binaryContent` |
+
+Current indexed examples include:
+
+| File | Notes |
+|------|-------|
+| `1706.03762v7.pdf` | PDF paper indexed as binary PDF content |
+| `engineering_handbook_glean_app.txt` | Engineering practices |
+| `hr_policy.txt` | HR policy and benefits |
+| `onboarding_guide.txt` | New employee onboarding |
+| `product_roadmap.txt` | FY2026 roadmap |
 
 ## Usage
 
-### Step 1 — Index documents
+### Index Documents
 
-Go to the **Index** tab → click **Index all documents**.
+In the UI, open the Index view and click `Index all`.
 
-This calls `POST /api/index` which pushes the four documents in `/documents` to Glean via the Indexing API (`/api/index/v1/indexdocuments`).
+This calls:
 
-> Note: Glean indexes asynchronously. Allow 1–2 minutes before documents appear in search results.
+```http
+POST /api/index
+```
 
-### Step 2 — Verify searchability
+Glean indexing is asynchronous, so allow a short delay before search/chat results appear.
 
-Go to the **Search** tab → type a query like `"leave policy"` or `"onboarding checklist"`.
+### Check Indexing Status
 
-This calls `POST /api/search` which queries the Glean index and returns top-N results with titles, snippets, and metadata.
+Use:
 
-### Step 3 — Chat
+```http
+POST /api/index/status
+```
 
-Go to the **Chat** tab → ask a question like:
+Example body:
 
-- *"How many days of annual leave do employees get?"*
-- *"What is the parental leave policy?"*
-- *"What are the Q3 product milestones?"*
-- *"How do I set up my laptop on Day 1?"*
+```json
+[
+  "1706.03762v7",
+  "engineering-handbook-001",
+  "hr-policy-001",
+  "onboarding-001",
+  "product-roadmap-001"
+]
+```
 
-This calls `POST /api/chat` which invokes the Glean Chat API and returns a grounded answer with clickable source citations.
+### Search
 
----
+In the UI, open the Search view and run a query, or call:
+
+```http
+POST /api/search
+```
+
+Example body:
+
+```json
+{
+  "query": "engineering handbook rules",
+  "page_size": 10
+}
+```
+
+### Chat
+
+In the UI, open the Chat view and ask a grounded question, or call:
+
+```http
+POST /api/chat
+```
+
+Example body:
+
+```json
+{
+  "question": "What are the FY2026 product roadmap milestones?"
+}
+```
+
+## Useful Chat Questions
+
+- What are the main Git workflow rules?
+- What is the expected process for code reviews?
+- What does the engineering handbook say about CI/CD?
+- What are the key leave and benefits policies?
+- What is the remote work policy?
+- What should a new employee complete during week one?
+- Which systems and contacts are mentioned in onboarding?
+- What are the major FY2026 product roadmap milestones?
+- What KPIs are listed in the roadmap?
+- What is the main topic and contribution of the PDF paper?
 
 ## MCP Server
 
-The MCP server exposes **two tools** over stdio, compatible with Cursor, Claude Desktop, and any MCP client.
+The MCP server is implemented in:
 
-### Run the MCP server
+```text
+src/mcp_server.py
+```
+
+It exposes two tools over stdio:
+
+| Tool | Description |
+|------|-------------|
+| `glean_search` | Accepts `query` and optional `page_size`; returns top documents with metadata |
+| `glean_chat` | Accepts `question` and optional `chat_history`; returns a grounded answer and sources |
+
+Run it manually:
 
 ```bash
 python -m src.mcp_server
 ```
 
-### Tools
+### GitHub Copilot In VS Code
 
-| Tool | Description |
-|------|-------------|
-| `glean_search` | Search the Glean index. Params: `query` (required), `page_size` (optional, 1–20) |
-| `glean_chat` | Ask a question and get a grounded answer with sources. Params: `question` (required), `chat_history` (optional) |
+This repo includes workspace MCP config:
 
-### Cursor integration
+```text
+.vscode/mcp.json
+```
 
-Copy `mcp_config.json` content into `~/.cursor/mcp.json` (or your MCP client config):
+Config:
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "glean": {
+      "type": "stdio",
       "command": "python",
       "args": ["-m", "src.mcp_server"],
-      "cwd": "/path/to/glean-app"
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
     }
   }
 }
 ```
 
----
+To use it:
+
+1. Open this repository folder in VS Code.
+2. Ensure GitHub Copilot Chat is enabled.
+3. Open Copilot Chat in Agent mode.
+4. Allow or enable the workspace MCP server if VS Code prompts you.
+5. Ask Copilot to use the Glean tools.
+
+Example prompts:
+
+```text
+Use glean_search to find engineering handbook rules.
+```
+
+```text
+Use glean_chat to answer: What are the FY2026 product roadmap milestones?
+```
 
 ## API Reference
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/documents` | List local documents |
-| POST | `/api/index` | Index all documents into Glean |
-| POST | `/api/search` | Search the Glean index |
-| POST | `/api/chat` | Chat with grounded answers |
-| GET | `/docs` | Interactive OpenAPI docs |
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/documents` | List local documents |
+| `POST` | `/api/index` | Index all local documents into Glean |
+| `POST` | `/api/index/status` | Check indexing status by document ID |
+| `POST` | `/api/search` | Search the Glean index |
+| `POST` | `/api/chat` | Ask a grounded chat question |
+| `GET` | `/docs` | FastAPI OpenAPI docs |
 
----
+## Technical Notes
 
-## Documents
+- The app uses direct Glean REST APIs, not the Glean Python SDK.
+- Indexing uses the Glean Indexing API under `/api/index/v1`.
+- Search and Chat use the Glean client REST API under `/rest/api/v1`.
+- Indexing and client tokens are intentionally separate.
+- The MCP server writes only JSON-RPC messages to stdout. Diagnostic output is sent to stderr so MCP clients can parse responses correctly.
+- On Windows, the MCP stdio loop uses simple blocking line reads for reliable local client compatibility.
 
-Four internal documents are pre-loaded in `/documents`:
+## Verification
 
-| File | Content |
-|------|---------|
-| `hr_policy.txt` | Leave, benefits, payroll, remote work policy |
-| `onboarding_guide.txt` | First-week checklist, systems, contacts |
-| `product_roadmap.txt` | FY2026 roadmap with milestones and KPIs |
-| `engineering_handbook.txt` | Git workflow, CI/CD, code standards, on-call |
+Backend tests:
 
----
+```bash
+python -m pytest -q
+```
 
-## Technical Decisions
+Frontend production build:
 
-**Python + FastAPI** — async-native, clean OpenAPI docs auto-generated, minimal boilerplate.
-
-**MCP via stdio** — the simplest transport for local MCP clients; no port management needed.
-
-**Separate Indexing vs. Client tokens** — Glean uses distinct tokens for write (Indexing API) and read (Search/Chat APIs). The code keeps them separate and never mixes them.
-
-**`isFirstPage: true, isLastPage: true`** in the indexing payload — tells Glean this is a complete, self-contained batch. For large doc sets you'd stream batches with checkpoint flags.
-
-**`allowAllDatasourceUsersAccess: true`** on each document — appropriate for a sandbox demo where all users should see all docs. Production would use `allowedUsers`/`allowedGroups`.
-
-**Chat history** is maintained client-side (in browser memory) and sent with each request. Glean's Chat API supports multi-turn via the `messages` array — no session state needed server-side.
-
-**Failure modes:**
-- Indexing is asynchronous — the API returns 202 immediately; documents become searchable after Glean's processing pipeline completes (typically seconds to minutes).
-- Rate limits: back off with exponential retry for 429 responses (not implemented in the prototype for simplicity).
-- If Chat returns no answer, it likely means no indexed documents match the question's context.
-# glean_knowledge_console
+```bash
+cd frontend
+npm run build
+```
