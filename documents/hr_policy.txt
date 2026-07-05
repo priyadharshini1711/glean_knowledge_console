@@ -1,0 +1,74 @@
+TITLE: Employee HR Policy & Benefits Guide
+DOCUMENT ID: hr-policy-001
+CATEGORY: Human Resources
+
+==============================================================
+SECTION 1: LEAVE POLICY
+==============================================================
+
+Annual Leave
+- Full-time employees are entitled to 20 days of paid annual leave per year.
+- Leave accrues at 1.67 days per month from the date of joining.
+- A maximum of 5 unused days may be carried forward to the next calendar year.
+- Leave requests must be submitted at least 7 days in advance through the HR portal.
+
+Sick Leave
+- Employees are entitled to 12 days of paid sick leave per year.
+- A medical certificate is required for absences exceeding 3 consecutive days.
+- Sick leave does not carry forward to the following year.
+
+Parental Leave
+- Primary caregiver: 16 weeks paid parental leave.
+- Secondary caregiver: 4 weeks paid parental leave.
+- Parental leave must be taken within 12 months of the child's birth or adoption.
+
+==============================================================
+SECTION 2: HEALTH & WELLNESS BENEFITS
+==============================================================
+
+Medical Insurance
+- All employees are covered under the company group health plan from Day 1.
+- Plan covers: hospitalization, outpatient, dental, and vision.
+- Dependents (spouse and up to 2 children) can be added at subsidized rates.
+
+Mental Health Support
+- Free access to the Employee Assistance Program (EAP) — 8 counseling sessions per year.
+- Wellness reimbursement: up to $500/year for gym, yoga, or wellness apps.
+
+==============================================================
+SECTION 3: COMPENSATION & PAYROLL
+==============================================================
+
+Salary Cycle
+- Salaries are processed on the last business day of each month.
+- Payslips are available via the HR portal by the 25th of each month.
+
+Performance Reviews
+- Annual performance reviews are conducted in December.
+- Mid-year check-ins are held in June.
+- Merit increases take effect from January 1 of the following year.
+
+==============================================================
+SECTION 4: CODE OF CONDUCT
+==============================================================
+
+- All employees must complete the annual compliance training by March 31.
+- Conflicts of interest must be disclosed to the HR department immediately.
+- The company has a zero-tolerance policy for harassment and discrimination.
+- Violations should be reported via the confidential ethics hotline: ethics@company.internal
+
+==============================================================
+SECTION 5: REMOTE WORK POLICY
+==============================================================
+
+Hybrid Model
+- Employees are expected to be in the office a minimum of 3 days per week (Tuesday–Thursday).
+- Remote work on Mondays and Fridays is permitted by default.
+- Full remote arrangements require manager and HR approval.
+
+Equipment
+- The company provides a laptop, monitor, and peripherals for home office use.
+- A one-time home office stipend of $400 is available for ergonomic accessories.
+
+Last updated: January 2026
+Contact: hr@company.internal

@@ -1,0 +1,76 @@
+TITLE: New Employee Onboarding Guide
+DOCUMENT ID: onboarding-001
+CATEGORY: Onboarding
+
+==============================================================
+WEEK 1: YOUR FIRST WEEK
+==============================================================
+
+Day 1 Checklist
+- Collect your access badge from reception (Building A, Ground Floor) between 9–10 AM.
+- Meet your onboarding buddy — assigned by HR before your start date.
+- Complete IT setup: laptop provisioning takes ~2 hours; bring your employee ID.
+- Attend the company orientation session at 2 PM in the Main Conference Room.
+- Set up corporate email, Slack, and the HR portal (credentials emailed to personal address).
+
+Day 2–3: Systems Access
+- Request access to required tools via the IT Helpdesk portal: it.company.internal
+- Standard tools provisioned automatically: Slack, Zoom, Jira, Confluence, GitHub.
+- Role-specific tools (Salesforce, AWS, Figma, etc.) require manager approval — submit ticket within your first week.
+
+Day 4–5: Team Integration
+- Schedule 1:1 introductory meetings with all direct teammates.
+- Review the team charter and current sprint goals in Confluence.
+- Attend your first team standup — ask your manager for the recurring invite link.
+
+==============================================================
+WEEK 2–4: RAMP-UP PERIOD
+==============================================================
+
+Training Requirements (mandatory, complete within 30 days)
+1. Information Security Awareness — 45 min (LMS portal)
+2. Data Privacy & GDPR Basics — 30 min (LMS portal)
+3. Code of Conduct & Ethics — 20 min (LMS portal)
+4. Product Walkthrough — schedule with Product team
+5. Customer Journey Overview — schedule with Solutions team
+
+Key Systems to Learn
+- HRIS (Workday): payroll, leave, and personal information management.
+- Expense Reporting (Concur): submit all expenses within 30 days of incurring.
+- Project Tracking (Jira): your primary day-to-day work tracker.
+- Documentation (Confluence): team wikis, runbooks, and process documentation.
+- Internal Chat (Slack): join #general, #engineering, #announcements, and your team channel.
+
+==============================================================
+PROBATION PERIOD
+==============================================================
+
+- The standard probation period is 90 days.
+- Your manager will conduct a 30-day and 90-day check-in.
+- Objectives for your first 90 days should be set with your manager by the end of Week 1.
+- Successful completion of probation is confirmed via a written notification from HR.
+
+==============================================================
+IMPORTANT CONTACTS
+==============================================================
+
+- IT Helpdesk: helpdesk@company.internal | Ext. 1000
+- HR Team: hr@company.internal | Ext. 2000
+- Payroll: payroll@company.internal | Ext. 2100
+- Facilities: facilities@company.internal | Ext. 3000
+- Security/Badge Issues: security@company.internal | Ext. 3100
+
+==============================================================
+OFFICE INFORMATION
+==============================================================
+
+Headquarters
+123 Innovation Drive, Suite 400
+San Francisco, CA 94105
+
+Hours: Monday–Friday, 8 AM – 7 PM
+Parking: Validated parking available in the adjacent garage (request sticker from Facilities)
+Cafeteria: Building B, Floor 2 — open 7:30 AM – 3 PM weekdays
+
+Last updated: January 2026
+Contact: hr@company.internal

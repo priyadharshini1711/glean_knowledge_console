@@ -1,0 +1,115 @@
+TITLE: Engineering Handbook
+DOCUMENT ID: engineering-handbook-001
+CATEGORY: Engineering
+
+==============================================================
+SECTION 1: DEVELOPMENT WORKFLOW
+==============================================================
+
+Git Branching Strategy
+We follow the GitFlow branching model:
+- main: production-ready code only. Direct commits are not allowed.
+- develop: integration branch for completed features.
+- feature/<ticket-id>-short-description: feature branches, branched from develop.
+- hotfix/<ticket-id>-short-description: urgent production fixes, branched from main.
+
+All branches must be merged via Pull Request (PR). PRs require:
+- At least 2 approvals from engineers (1 must be a senior engineer).
+- All CI checks passing (lint, unit tests, integration tests).
+- No unresolved review comments.
+
+Commit Message Format
+We use Conventional Commits:
+  feat: add user authentication flow
+  fix: resolve null pointer in checkout service
+  chore: update dependency versions
+  docs: add API reference for payments endpoint
+
+==============================================================
+SECTION 2: CI/CD PIPELINE
+==============================================================
+
+Pipeline Stages (GitHub Actions)
+1. Lint — ESLint/Pylint run on every push to any branch.
+2. Unit Tests — Jest (frontend), Pytest (backend). Must pass with >80% coverage.
+3. Integration Tests — run on PRs to develop and main. Uses staging environment.
+4. Build — Docker image built and pushed to ECR on merge to develop.
+5. Deploy to Staging — automatic on merge to develop.
+6. Deploy to Production — manual trigger with approval gate (2 on-call engineers).
+
+Deployment Frequency
+- Staging: continuous (multiple times per day).
+- Production: Tuesday and Thursday release windows (10 AM–12 PM PST).
+- Hotfixes: any time, with emergency approval.
+
+Rollback Procedure
+If a production incident is detected:
+1. Page the on-call engineer via PagerDuty.
+2. Assess impact — rollback if >1% of users are affected.
+3. Use the `./scripts/rollback.sh <version>` script to revert to the previous image.
+4. Write an incident report within 24 hours (template in Confluence).
+
+==============================================================
+SECTION 3: CODE STANDARDS
+==============================================================
+
+Frontend (TypeScript/React)
+- Use functional components and React hooks exclusively.
+- State management: Zustand for global state, React Query for server state.
+- Styling: Tailwind CSS. No inline styles or CSS-in-JS.
+- All components must have unit tests (Jest + React Testing Library).
+
+Backend (Python/FastAPI)
+- Python 3.11+. Type hints are required on all function signatures.
+- Pydantic models for all request/response schemas.
+- Async/await for all I/O operations.
+- 80% minimum test coverage enforced by CI.
+- Dependency injection via FastAPI's Depends pattern.
+
+Database
+- PostgreSQL 15 (primary), Redis 7 (cache/sessions).
+- All schema changes via Alembic migrations (never modify schema directly).
+- Migrations must be reviewed by a senior engineer.
+- Index all foreign keys and columns used in WHERE clauses.
+
+Security Standards
+- All secrets managed via AWS Secrets Manager — no hardcoded credentials.
+- OWASP Top 10 checklist review required for any user-facing endpoint.
+- Penetration testing run quarterly by external security firm.
+- All API endpoints require JWT authentication unless explicitly exempted.
+
+==============================================================
+SECTION 4: ON-CALL ROTATION
+==============================================================
+
+- On-call shifts run Sunday–Saturday.
+- Each engineer participates in on-call rotation after 6 months of tenure.
+- Primary on-call: responds within 15 minutes.
+- Secondary on-call: backup if primary is unavailable.
+- PagerDuty schedule: pagerduty.company.internal
+- Incident severity levels:
+  P1 (Critical): Site down or data loss. Response: immediate.
+  P2 (High): Major feature unavailable. Response: within 1 hour.
+  P3 (Medium): Degraded performance. Response: within 4 hours.
+  P4 (Low): Minor issue, workaround exists. Response: next business day.
+
+==============================================================
+SECTION 5: ARCHITECTURE OVERVIEW
+==============================================================
+
+System Components
+- API Gateway: AWS API Gateway — routes traffic to microservices.
+- Auth Service: handles authentication and token issuance (FastAPI).
+- Core API: main business logic service (FastAPI + PostgreSQL).
+- Notification Service: email and push notifications (FastAPI + SES + FCM).
+- Analytics Pipeline: event ingestion and processing (Kafka + Spark + Redshift).
+- CDN: CloudFront for static assets and API caching.
+
+Inter-service Communication
+- Synchronous: REST over HTTPS (internal) and gRPC for high-throughput paths.
+- Asynchronous: Kafka topics for event-driven workflows.
+- All internal services communicate over the private VPC — no public exposure.
+
+Last updated: March 2026
+Owner: VP Engineering
+Contact: engineering@company.internal

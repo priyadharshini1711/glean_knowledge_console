@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "glean": {
+      "command": "python",
+      "args": ["-m", "src.mcp_server"],
+      "cwd": "D:\\My Project Code Base\\Glean App",
+      "env": {
+        "PYTHONPATH": "D:\\My Project Code Base\\Glean App"
+      }
+    }
+  }
+}

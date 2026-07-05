@@ -1,0 +1,111 @@
+TITLE: Product Roadmap — FY2026
+DOCUMENT ID: product-roadmap-001
+CATEGORY: Product Strategy
+
+==============================================================
+EXECUTIVE SUMMARY
+==============================================================
+
+This document outlines the product roadmap for FY2026 (January–December 2026). Our north star is to grow monthly active users (MAU) from 45,000 to 120,000 and achieve a Net Promoter Score (NPS) of 50+.
+
+The roadmap is organized into three themes:
+1. Platform Reliability & Performance
+2. AI-Powered Features
+3. Enterprise Expansion
+
+==============================================================
+THEME 1: PLATFORM RELIABILITY & PERFORMANCE (Q1–Q2)
+==============================================================
+
+Milestone 1.1 — Infrastructure Upgrade (Q1 2026)
+- Migrate backend services from single-region to multi-region AWS deployment.
+- Target: 99.99% uptime SLA (up from 99.9%).
+- Owner: Infrastructure Team
+- Status: In Progress
+
+Milestone 1.2 — API Response Time Optimization (Q1 2026)
+- Reduce p95 API latency from 850ms to under 200ms.
+- Introduce distributed caching layer (Redis Cluster).
+- Owner: Backend Team
+- Status: Planned
+
+Milestone 1.3 — Mobile App Rewrite (Q2 2026)
+- Rewrite iOS and Android apps in React Native for unified codebase.
+- Ship v2.0 with offline support and push notifications.
+- Owner: Mobile Team
+- Status: Planned
+
+==============================================================
+THEME 2: AI-POWERED FEATURES (Q2–Q3)
+==============================================================
+
+Milestone 2.1 — AI Search (Q2 2026)
+- Launch semantic search powered by vector embeddings.
+- Replace keyword search in the main product experience.
+- Owner: AI/ML Team
+- Status: Design Phase
+
+Milestone 2.2 — Smart Recommendations (Q3 2026)
+- Personalized content and action recommendations on the dashboard.
+- Model trained on user behavior signals (clicks, dwell time, completions).
+- Owner: AI/ML Team + Growth Team
+- Status: Research Phase
+
+Milestone 2.3 — AI Writing Assistant (Q3 2026)
+- In-app AI assistant for drafting, summarizing, and editing content.
+- Integration with Claude API for LLM capabilities.
+- Owner: Product Team
+- Status: Scoping
+
+==============================================================
+THEME 3: ENTERPRISE EXPANSION (Q3–Q4)
+==============================================================
+
+Milestone 3.1 — SSO & SCIM Provisioning (Q3 2026)
+- Full support for SAML 2.0 SSO and SCIM for automated user provisioning.
+- Required for enterprise deals >1,000 seats.
+- Owner: Identity Team
+- Status: Planned
+
+Milestone 3.2 — Audit Logging & Compliance (Q3 2026)
+- Exportable audit logs for SOC 2 Type II compliance.
+- Role-based access controls (RBAC) v2 with custom role definitions.
+- Owner: Security Team
+- Status: Planned
+
+Milestone 3.3 — Enterprise Analytics Dashboard (Q4 2026)
+- Executive dashboard with usage metrics, adoption funnels, and ROI reporting.
+- Data export to CSV/Tableau/PowerBI.
+- Owner: Analytics Team
+- Status: Not Started
+
+Milestone 3.4 — Global Expansion (Q4 2026)
+- Localization for 5 new languages: French, German, Japanese, Portuguese, Spanish.
+- Data residency options for EU customers (GDPR).
+- Owner: Platform Team
+- Status: Not Started
+
+==============================================================
+KEY METRICS & SUCCESS CRITERIA
+==============================================================
+
+| Metric                     | Current   | Q2 Target | EOY Target |
+|----------------------------|-----------|-----------|------------|
+| Monthly Active Users (MAU) | 45,000    | 72,000    | 120,000    |
+| Net Promoter Score (NPS)   | 32        | 42        | 50+        |
+| API p95 Latency            | 850ms     | 300ms     | <200ms     |
+| Uptime SLA                 | 99.9%     | 99.95%    | 99.99%     |
+| Enterprise Customers       | 28        | 45        | 80         |
+
+==============================================================
+RISKS & DEPENDENCIES
+==============================================================
+
+1. AI Search (2.1) depends on the Infrastructure Upgrade (1.1) completion.
+2. Enterprise SSO timeline is dependent on security audit completion (external vendor).
+3. Mobile rewrite (1.3) requires design system v2 — design team capacity is a constraint.
+4. Hiring: 12 open engineering roles must be filled by Q2 to meet H2 commitments.
+
+Last updated: February 2026
+Owner: Chief Product Officer
+Contact: product@company.internal
