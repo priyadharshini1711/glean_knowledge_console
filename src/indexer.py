@@ -29,7 +29,7 @@ def _base_document_payload(filepath: Path, doc_id: str, title: str) -> Dict[str,
         "objectType": "Document",
         "viewURL": f"{DOCUMENT_BASE_URL.rstrip('/')}/{doc_id}",
         "author": {
-            "name": "Internal Team",
+            "name": "Glean Software Architecture Team",
             "email": "internal@company.internal",
         },
         "updatedAt": int(time.time()),

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Glean Enterprise RAG Chatbot — Production Architecture</title>
+<style>
+  :root{
+    --client-bg:#FFFFFF;    --client-bd:#C7CCD4;  --client-chip:#3D4451;
+    --source-bg:#FFF7E8;    --source-bd:#E8A93C;  --source-chip:#B9822A;
+    --identity-bg:#FDEEEE;  --identity-bd:#D97575; --identity-chip:#C1484B;
+    --ingest-bg:#EAF2FE;    --ingest-bd:#6E93C4;  --ingest-chip:#3E6DA8;
+    --compute-bg:#EAF7EC;   --compute-bd:#6FAE7C; --compute-chip:#3F8F52;
+    --gateway-bg:#FFF7DC;   --gateway-bd:#D8B646; --gateway-chip:#B8933A;
+    --glean-bg:#F3EAF8;     --glean-bd:#A87CC0;   --glean-chip:#7C4A9A;
+    --obs-bg:#F1F2F3;       --obs-bd:#A9ACB1;     --obs-chip:#6B6E73;
+    --cicd-bg:#FDF3DC;      --cicd-bd:#C99A3E;    --cicd-chip:#9C6F1F;
+    --ink:#23262B; --sub:#6B7077;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:44px 28px 70px; background:#EEF0F3;
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+  }
+  .page-title{max-width:1500px;margin:0 auto 4px;font-size:26px;font-weight:800;}
+  .page-sub{max-width:1500px;margin:0 auto 34px;font-size:13.5px;color:var(--sub);font-weight:500;}
+  .canvas{position:relative;max-width:1500px;margin:0 auto;}
+  svg.connectors{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+  svg.connectors path{fill:none;stroke-width:1.6;transition:stroke-width .15s,opacity .15s;}
+  svg.connectors path.dim{opacity:.12;}
+  svg.connectors path.active{stroke-width:3;}
+  svg.connectors text{font-size:9.5px;font-weight:600;fill:#555;paint-order:stroke;stroke:#EEF0F3;stroke-width:3px;transition:opacity .15s;}
+  svg.connectors text.dim{opacity:.12;}
+
+  .band{position:relative;z-index:2;background:#fff;border-radius:16px;
+    box-shadow:0 1px 2px rgba(20,20,30,.06),0 6px 18px rgba(20,20,30,.05);
+    margin-bottom:22px;padding:20px 26px 24px;}
+  .band-title{margin:0 0 16px;font-size:13px;font-weight:800;text-transform:uppercase;
+    letter-spacing:.06em;color:#555;}
+  .subhead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    color:#9A9FA6;margin:0 0 10px;}
+  .two-col{display:flex;gap:22px;}
+  .two-col>.panel{flex:1;min-width:0;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .row+.row{margin-top:12px;}
+  .card{flex:1 1 150px;min-width:140px;border-radius:11px;padding:10px 12px;border:1.5px solid;
+    display:flex;flex-direction:column;gap:3px;cursor:default;transition:transform .12s,box-shadow .12s,opacity .15s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.10);}
+  .card.dim{opacity:.28;}
+  .card .top{display:flex;align-items:center;gap:7px;}
+  .chip{flex:0 0 auto;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;
+    justify-content:center;color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.02em;}
+  .card h4{margin:0;font-size:12.5px;font-weight:700;line-height:1.25;}
+  .card p{margin:0;font-size:10.6px;color:var(--sub);line-height:1.32;}
+
+  .cat-client{background:var(--client-bg);border-color:var(--client-bd);}
+  .cat-client .chip{background:var(--client-chip);}
+  .cat-source{background:var(--source-bg);border-color:var(--source-bd);}
+  .cat-source .chip{background:var(--source-chip);}
+  .cat-identity{background:var(--identity-bg);border-color:var(--identity-bd);}
+  .cat-identity .chip{background:var(--identity-chip);}
+  .cat-ingest{background:var(--ingest-bg);border-color:var(--ingest-bd);}
+  .cat-ingest .chip{background:var(--ingest-chip);}
+  .cat-compute{background:var(--compute-bg);border-color:var(--compute-bd);}
+  .cat-compute .chip{background:var(--compute-chip);}
+  .cat-gateway{background:var(--gateway-bg);border-color:var(--gateway-bd);}
+  .cat-gateway .chip{background:var(--gateway-chip);}
+  .cat-glean{background:var(--glean-bg);border-color:var(--glean-bd);}
+  .cat-glean .chip{background:var(--glean-chip);}
+  .cat-obs{background:var(--obs-bg);border-color:var(--obs-bd);}
+  .cat-obs .chip{background:var(--obs-chip);}
+  .cat-cicd{background:var(--cicd-bg);border-color:var(--cicd-bd);}
+  .cat-cicd .chip{background:var(--cicd-chip);}
+
+  .note{font-size:10.5px;font-style:italic;color:#9A9FA6;margin:12px 2px 0;}
+
+  .legend{max-width:1500px;margin:8px auto 0;background:#fff;border-radius:16px;
+    box-shadow:0 1px 2px rgba(20,20,30,.06);padding:16px 26px;display:flex;flex-wrap:wrap;gap:18px;}
+  .legend .item{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:#4B4F55;}
+  .legend .swatch{width:14px;height:14px;border-radius:4px;border:1.5px solid;}
+
+  @media print{ body{background:#fff;padding:10px;} .band{box-shadow:none;border:1px solid #ddd;} }
+</style>
+</head>
+<body>
+
+<div class="page-title">Glean Enterprise RAG Chatbot — Production Architecture</div>
+<div class="page-sub">Secure, CI/CD-enabled, SOC 2-aligned deployment on Azure &nbsp;·&nbsp; 5,000 employees across 3 business units &nbsp;·&nbsp; hover any component to trace its connections</div>
+
+<div class="canvas" id="canvas">
+  <svg class="connectors" id="svg"></svg>
+
+  <!-- BAND: Clients & Data Sources -->
+  <div class="band">
+    <div class="band-title">Inputs — End Users &amp; External Data Sources</div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="subhead">Clients</div>
+        <div class="row">
+          <div class="card cat-client" data-id="cl_emp"><div class="top"><span class="chip">EM</span><h4>Employees</h4></div><p>Web chat UI — Finance / Eng / HR</p></div>
+          <div class="card cat-client" data-id="cl_mcp"><div class="top"><span class="chip">CU</span><h4>MCP Clients</h4></div><p>Cursor / Claude Desktop</p></div>
+          <div class="card cat-client" data-id="cl_bu"><div class="top"><span class="chip">BU</span><h4>BU Admins</h4></div><p>Read-only dashboard viewers</p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="subhead">External Data Sources</div>
+        <div class="row">
+          <div class="card cat-source" data-id="src_sp"><div class="top"><span class="chip">SP</span><h4>SharePoint / OneDrive</h4></div><p>Microsoft Graph API</p></div>
+          <div class="card cat-source" data-id="src_conf"><div class="top"><span class="chip">CF</span><h4>Confluence</h4></div><p>REST connector</p></div>
+          <div class="card cat-source" data-id="src_fs"><div class="top"><span class="chip">FS</span><h4>File Shares</h4></div><p>Azure Data Factory</p></div>
+          <div class="card cat-source" data-id="src_hr"><div class="top"><span class="chip">HR</span><h4>HR / Ticketing</h4></div><p>Event Grid webhooks</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BAND: Identity -->
+  <div class="band">
+    <div class="band-title">Identity &amp; Secrets</div>
+    <div class="row">
+      <div class="card cat-identity" data-id="id_entra"><div class="top"><span class="chip">AD</span><h4>Microsoft Entra ID</h4></div><p>SAML 2.0 / OIDC SSO — issues 1-hr JWT</p></div>
+      <div class="card cat-identity" data-id="id_kv"><div class="top"><span class="chip">KV</span><h4>Azure Key Vault</h4></div><p>Tokens, API keys, certs — rotated 90d</p></div>
+      <div class="card cat-identity" data-id="id_mi"><div class="top"><span class="chip">MI</span><h4>Managed Identity</h4></div><p>No static credentials for compute</p></div>
+      <div class="card cat-identity" data-id="id_def"><div class="top"><span class="chip">DF</span><h4>Defender for Cloud</h4></div><p>CIS / NIST / ISO posture scoring</p></div>
+    </div>
+  </div>
+
+  <!-- BAND: Ingestion -->
+  <div class="band">
+    <div class="band-title">Ingestion &amp; Processing Layer</div>
+    <div class="row">
+      <div class="card cat-ingest" data-id="in_blob"><div class="top"><span class="chip">BL</span><h4>Blob Storage</h4></div><p>Landing zone</p></div>
+      <div class="card cat-ingest" data-id="in_eg"><div class="top"><span class="chip">EG</span><h4>Event Grid</h4></div><p>Blob trigger + daily 2AM re-sync</p></div>
+      <div class="card cat-ingest" data-id="in_sb"><div class="top"><span class="chip">SB</span><h4>Service Bus Queue</h4></div><p>Decouples ingestion bursts</p></div>
+      <div class="card cat-compute" data-id="in_func"><div class="top"><span class="chip">FN</span><h4>Azure Functions</h4></div><p>Extract, tag, call Indexing API (cc=100)</p></div>
+      <div class="card cat-identity" data-id="in_dlq"><div class="top"><span class="chip">DL</span><h4>Dead-Letter Queue</h4></div><p>Failed docs + retry</p></div>
+    </div>
+    <div class="note">Scale: 50k docs ≈ 14 docs/sec/hr · Service Bus lock 5 min + exponential backoff</div>
+  </div>
+
+  <!-- BAND: Perimeter -->
+  <div class="band">
+    <div class="band-title">Application Perimeter — Azure VNet (private subnets)</div>
+    <div class="row">
+      <div class="card cat-gateway" data-id="pe_appgw"><div class="top"><span class="chip">AG</span><h4>App Gateway + WAF</h4></div><p>Public entry, TLS 1.2+ termination</p></div>
+      <div class="card cat-gateway" data-id="pe_apim"><div class="top"><span class="chip">AM</span><h4>API Management</h4></div><p>JWT validation, rate limiting</p></div>
+      <div class="card cat-gateway" data-id="pe_nat"><div class="top"><span class="chip">NG</span><h4>NAT Gateway</h4></div><p>Egress to Glean SaaS</p></div>
+    </div>
+    <div class="row">
+      <div class="card cat-compute" data-id="pe_ca"><div class="top"><span class="chip">CA</span><h4>Container Apps · FastAPI</h4></div><p>Auto-scale 2–20 replicas, KEDA</p></div>
+      <div class="card cat-compute" data-id="pe_mcps"><div class="top"><span class="chip">MS</span><h4>Container Apps · MCP Server</h4></div><p>Search + chat tools</p></div>
+      <div class="card cat-gateway" data-id="pe_redis"><div class="top"><span class="chip">RD</span><h4>Cache for Redis</h4></div><p>15 min TTL, ~40% fewer API calls</p></div>
+      <div class="card cat-gateway" data-id="pe_pe"><div class="top"><span class="chip">PE</span><h4>Private Endpoints</h4></div><p>Key Vault, Blob, Service Bus</p></div>
+    </div>
+  </div>
+
+  <!-- BAND: Glean -->
+  <div class="band">
+    <div class="band-title">Glean Platform — SaaS, Tenant-Isolated (SOC 2 Type II)</div>
+    <div class="row">
+      <div class="card cat-glean" data-id="gl_idx"><div class="top"><span class="chip">IX</span><h4>Indexing API</h4></div><p>Sandbox datasource ingest</p></div>
+      <div class="card cat-glean" data-id="gl_search"><div class="top"><span class="chip">SR</span><h4>Search API</h4></div><p>Top-N results + metadata</p></div>
+      <div class="card cat-glean" data-id="gl_chat"><div class="top"><span class="chip">CH</span><h4>Chat API</h4></div><p>Grounded answers + citations</p></div>
+      <div class="card cat-glean" data-id="gl_tenant"><div class="top"><span class="chip">TN</span><h4>Tenant Data Store</h4></div><p>allowedUsers / allowedGroups enforced at query time</p></div>
+    </div>
+  </div>
+
+  <!-- BAND: Observability -->
+  <div class="band">
+    <div class="band-title">Observability, Audit &amp; Compliance</div>
+    <div class="row">
+      <div class="card cat-obs" data-id="ob_mon"><div class="top"><span class="chip">MN</span><h4>Azure Monitor</h4></div><p>Metrics, action groups</p></div>
+      <div class="card cat-obs" data-id="ob_la"><div class="top"><span class="chip">LA</span><h4>Log Analytics</h4></div><p>7-yr retention</p></div>
+      <div class="card cat-obs" data-id="ob_ai"><div class="top"><span class="chip">AI</span><h4>App Insights</h4></div><p>Distributed tracing</p></div>
+      <div class="card cat-obs" data-id="ob_pd"><div class="top"><span class="chip">PD</span><h4>PagerDuty</h4></div><p>P1 if error rate &gt;5% / 2min</p></div>
+      <div class="card cat-obs" data-id="ob_dash"><div class="top"><span class="chip">DB</span><h4>Customer Dashboard</h4></div><p>Read-only health &amp; usage</p></div>
+      <div class="card cat-obs" data-id="ob_audit"><div class="top"><span class="chip">AL</span><h4>Audit Log</h4></div><p>User, query, docs returned</p></div>
+    </div>
+    <div class="note">SLA: 99.9% uptime · 24-hr post-mortems · weekly usage &amp; error email</div>
+  </div>
+
+  <!-- BAND: CI/CD -->
+  <div class="band">
+    <div class="band-title">CI/CD Pipeline — Infrastructure &amp; Application Delivery</div>
+    <div class="row">
+      <div class="card cat-cicd" data-id="ci_git"><div class="top"><span class="chip">GT</span><h4>Git Repo</h4></div><p>GitHub / Azure Repos</p></div>
+      <div class="card cat-cicd" data-id="ci_build"><div class="top"><span class="chip">CI</span><h4>Build &amp; Unit Tests</h4></div><p>Actions / Pipelines</p></div>
+      <div class="card cat-cicd" data-id="ci_scan"><div class="top"><span class="chip">SG</span><h4>Security Gates</h4></div><p>SAST/DAST, image + IaC scan</p></div>
+      <div class="card cat-cicd" data-id="ci_acr"><div class="top"><span class="chip">CR</span><h4>Container Registry</h4></div><p>Signed image</p></div>
+      <div class="card cat-cicd" data-id="ci_iac"><div class="top"><span class="chip">TF</span><h4>Terraform / Bicep</h4></div><p>Plan → apply</p></div>
+      <div class="card cat-cicd" data-id="ci_stg"><div class="top"><span class="chip">DS</span><h4>Deploy Staging</h4></div><p>+ smoke tests</p></div>
+      <div class="card cat-cicd" data-id="ci_gate"><div class="top"><span class="chip">AP</span><h4>Approval Gate</h4></div><p>Release owner sign-off</p></div>
+      <div class="card cat-cicd" data-id="ci_prod"><div class="top"><span class="chip">PR</span><h4>Deploy Production</h4></div><p>Blue/green, auto-rollback</p></div>
+    </div>
+    <div class="note">Same pipeline provisions Key Vault, VNet, Service Bus, Container Apps &amp; Redis via IaC — no manual console changes in production</div>
+  </div>
+
+</div>
+
+<div class="legend">
+  <div class="item"><span class="swatch" style="background:var(--client-bg);border-color:var(--client-bd);"></span>Client / User</div>
+  <div class="item"><span class="swatch" style="background:var(--source-bg);border-color:var(--source-bd);"></span>Data Source</div>
+  <div class="item"><span class="swatch" style="background:var(--identity-bg);border-color:var(--identity-bd);"></span>Identity / Secrets</div>
+  <div class="item"><span class="swatch" style="background:var(--ingest-bg);border-color:var(--ingest-bd);"></span>Ingestion</div>
+  <div class="item"><span class="swatch" style="background:var(--compute-bg);border-color:var(--compute-bd);"></span>Compute</div>
+  <div class="item"><span class="swatch" style="background:var(--gateway-bg);border-color:var(--gateway-bd);"></span>Gateway / Cache</div>
+  <div class="item"><span class="swatch" style="background:var(--glean-bg);border-color:var(--glean-bd);"></span>Glean SaaS</div>
+  <div class="item"><span class="swatch" style="background:var(--obs-bg);border-color:var(--obs-bd);"></span>Observability</div>
+  <div class="item"><span class="swatch" style="background:var(--cicd-bg);border-color:var(--cicd-bd);"></span>CI/CD Stage</div>
+</div>
+
+<script>
+const COLORS = {
+  client:'#8890A0', source:'#B9822A', identity:'#C1484B', ingest:'#3E6DA8',
+  compute:'#3F8F52', gateway:'#B8933A', glean:'#7C4A9A', obs:'#8E9297', cicd:'#9C6F1F'
+};
+// [from, to, colorKey, dashed, label]
+const EDGES = [
+  ['src_sp','in_blob','source',false,''],
+  ['src_conf','in_blob','source',false,''],
+  ['src_fs','in_blob','source',false,''],
+  ['src_hr','in_sb','source',false,'webhook'],
+  ['in_blob','in_eg','ingest',false,''],
+  ['in_eg','in_sb','ingest',false,''],
+  ['in_sb','in_func','ingest',false,''],
+  ['in_sb','in_dlq','identity',true,'failed'],
+  ['in_dlq','ob_pd','identity',true,'alert'],
+  ['in_func','gl_idx','glean',false,'index docs'],
+  ['in_func','id_mi','identity',false,'identity'],
+  ['id_mi','id_kv','identity',false,'fetch secret'],
+
+  ['cl_emp','id_entra','identity',false,'SSO login'],
+  ['cl_emp','pe_appgw','client',false,'HTTPS'],
+  ['cl_mcp','pe_appgw','client',false,'HTTPS (MCP)'],
+  ['cl_bu','ob_dash','obs',true,'view'],
+  ['pe_appgw','pe_apim','gateway',false,''],
+  ['id_entra','pe_apim','identity',false,'JWT validation'],
+  ['pe_apim','pe_ca','gateway',false,'route'],
+  ['pe_apim','pe_mcps','gateway',false,'route'],
+  ['pe_ca','pe_redis','compute',false,'cache'],
+  ['pe_mcps','pe_redis','compute',false,'cache'],
+  ['pe_ca','gl_search','compute',false,'search'],
+  ['pe_ca','gl_chat','compute',false,'chat'],
+  ['pe_mcps','gl_search','compute',false,''],
+  ['pe_mcps','gl_chat','compute',false,''],
+  ['gl_search','gl_tenant','glean',false,''],
+  ['gl_chat','gl_tenant','glean',false,''],
+  ['gl_idx','gl_tenant','glean',false,''],
+  ['pe_ca','id_mi','identity',false,'identity'],
+  ['pe_ca','pe_nat','gateway',true,'egress'],
+  ['pe_pe','id_kv','gateway',true,'private link'],
+
+  ['in_func','ob_la','obs',true,'logs'],
+  ['pe_ca','ob_la','obs',true,'logs'],
+  ['ob_la','ob_mon','obs',false,''],
+  ['ob_la','ob_ai','obs',false,''],
+  ['ob_la','ob_audit','obs',false,''],
+  ['ob_mon','ob_pd','obs',false,'alert'],
+  ['ob_mon','ob_dash','obs',false,'metrics'],
+  ['id_def','in_func','identity',true,'scan'],
+  ['id_def','pe_ca','identity',true,'scan'],
+
+  ['ci_git','ci_build','cicd',false,''],
+  ['ci_build','ci_scan','cicd',false,''],
+  ['ci_scan','ci_acr','cicd',false,''],
+  ['ci_acr','ci_iac','cicd',false,''],
+  ['ci_iac','ci_stg','cicd',false,''],
+  ['ci_stg','ci_gate','cicd',false,''],
+  ['ci_gate','ci_prod','cicd',false,''],
+  ['ci_prod','pe_ca','cicd',false,'deploys'],
+  ['ci_iac','id_kv','cicd',true,'provisions'],
+];
+
+const svg = document.getElementById('svg');
+const canvas = document.getElementById('canvas');
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+function ensureMarker(key){
+  let m = svg.querySelector('#arrow-'+key);
+  if(m) return;
+  let defs = svg.querySelector('defs');
+  if(!defs){ defs = document.createElementNS(SVGNS,'defs'); svg.appendChild(defs); }
+  const marker = document.createElementNS(SVGNS,'marker');
+  marker.setAttribute('id','arrow-'+key);
+  marker.setAttribute('viewBox','0 0 10 10');
+  marker.setAttribute('refX','8'); marker.setAttribute('refY','5');
+  marker.setAttribute('markerWidth','7'); marker.setAttribute('markerHeight','7');
+  marker.setAttribute('orient','auto-start-reverse');
+  const path = document.createElementNS(SVGNS,'path');
+  path.setAttribute('d','M 0 0 L 10 5 L 0 10 z');
+  path.setAttribute('fill', COLORS[key]);
+  marker.appendChild(path);
+  defs.appendChild(marker);
+}
+
+function rectOf(id){
+  const el = document.querySelector('[data-id="'+id+'"]');
+  if(!el) return null;
+  const r = el.getBoundingClientRect();
+  const cr = canvas.getBoundingClientRect();
+  return {
+    left:r.left-cr.left, top:r.top-cr.top, right:r.right-cr.left, bottom:r.bottom-cr.top,
+    cx:(r.left+r.right)/2-cr.left, cy:(r.top+r.bottom)/2-cr.top
+  };
+}
+
+function elbowPath(a,b){
+  const dx = b.cx-a.cx, dy = b.cy-a.cy;
+  let x1,y1,x2,y2,mid;
+  if(Math.abs(dy) > Math.abs(dx)*0.9){
+    if(dy>=0){ x1=a.cx; y1=a.bottom; x2=b.cx; y2=b.top; }
+    else     { x1=a.cx; y1=a.top;    x2=b.cx; y2=b.bottom; }
+    mid = (y1+y2)/2;
+    return {d:`M ${x1} ${y1} L ${x1} ${mid} L ${x2} ${mid} L ${x2} ${y2}`, lx:(x1+x2)/2, ly:mid};
+  } else {
+    if(dx>=0){ x1=a.right; y1=a.cy; x2=b.left;  y2=b.cy; }
+    else     { x1=a.left;  y1=a.cy; x2=b.right; y2=b.cy; }
+    mid = (x1+x2)/2;
+    return {d:`M ${x1} ${y1} L ${mid} ${y1} L ${mid} ${y2} L ${x2} ${y2}`, lx:mid, ly:(y1+y2)/2};
+  }
+}
+
+function draw(){
+  svg.innerHTML = '';
+  Object.keys(COLORS).forEach(ensureMarker);
+  EDGES.forEach(([from,to,colorKey,dashed,label],i)=>{
+    const a = rectOf(from), b = rectOf(to);
+    if(!a||!b) return;
+    const {d,lx,ly} = elbowPath(a,b);
+    const path = document.createElementNS(SVGNS,'path');
+    path.setAttribute('d',d);
+    path.setAttribute('stroke', COLORS[colorKey]);
+    path.setAttribute('opacity', dashed ? 0.55 : 0.75);
+    if(dashed) path.setAttribute('stroke-dasharray','4 3');
+    path.setAttribute('marker-end','url(#arrow-'+colorKey+')');
+    path.dataset.from = from; path.dataset.to = to;
+    svg.appendChild(path);
+    if(label){
+      const text = document.createElementNS(SVGNS,'text');
+      text.setAttribute('x', lx); text.setAttribute('y', ly-4);
+      text.setAttribute('text-anchor','middle');
+      text.textContent = label;
+      text.dataset.from = from; text.dataset.to = to;
+      svg.appendChild(text);
+    }
+  });
+}
+
+draw();
+window.addEventListener('resize', ()=>{ clearTimeout(window._rt); window._rt = setTimeout(draw,120); });
+
+document.querySelectorAll('.card').forEach(card=>{
+  const id = card.dataset.id;
+  card.addEventListener('mouseenter', ()=>{
+    document.querySelectorAll('.card').forEach(c=>{
+      if(c.dataset.id!==id) c.classList.add('dim');
+    });
+    svg.querySelectorAll('path,text').forEach(el=>{
+      if(el.dataset.from===id || el.dataset.to===id) el.classList.add('active');
+      else el.classList.add('dim');
+    });
+  });
+  card.addEventListener('mouseleave', ()=>{
+    document.querySelectorAll('.card').forEach(c=>c.classList.remove('dim'));
+    svg.querySelectorAll('path,text').forEach(el=>{ el.classList.remove('active'); el.classList.remove('dim'); });
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+========================================================================
+GLEAN: ENTERPRISE SEARCH AND AI ASSISTANT OVERVIEW
+========================================================================
+
+1. WHAT IS GLEAN?
+------------------------------------------------------------------------
+Glean is an AI-powered enterprise search platform. It connects all of 
+a company's fragmented applications (like Slack, Google Drive, Jira, 
+Microsoft 365, and GitHub) into a single, unified search interface. 
+
+2. KEY FEATURES
+------------------------------------------------------------------------
+* Unified Search: Finds documents, conversations, and tickets across 
+  all workplace apps instantly.
+* Generative AI Chat: Answers complex questions by synthesizing data 
+  from connected company knowledge bases.
+* Personalized Results: Understands user roles, teams, and project 
+  contexts to deliver relevant results.
+* Data Governance: Strictly respects existing permissions, ensuring 
+  employees only see information they already have access to.
+
+3. INTEGRATION CAPABILITIES
+------------------------------------------------------------------------
+* Connects out-of-the-box with 100+ popular SaaS applications.
+* Indexes text-based documentation, including .txt, .md, and .pdf files.
+* Allows direct file uploads to Glean Chat for localized analysis.
+
+========================================================================

@@ -5,6 +5,7 @@ Glean Chat API - generate grounded answers with source citations.
 from typing import Any, Dict, List, Optional
 
 from src.glean_client import get_client_api_client
+from src.searcher import search
 
 
 def _as_dict(value: Any) -> Dict[str, Any]:
@@ -116,6 +117,29 @@ async def chat(
                       Each item: {"role": "USER"|"ASSISTANT", "content": "..."}
         save_chat: Whether to persist the chat session in Glean.
     """
+
+    #search the document before taking up the chat API, if the search result is not empty, then we can use the chat API to get the answer
+    search_result = await search(query=question, page_size=5)
+
+    if search_result["status"] == "error":
+        return {
+            "status": "error",
+            "message": f"Search failed (HTTP {search_result.get('http_status', '?')}): {search_result.get('message', 'Unknown error')}",
+            "http_status": search_result.get("http_status", None),
+            "answer": "",
+            "citations": [],
+        }
+    else:
+        if search_result["total_results"] == 0:
+            return {
+                "status": "error",
+                "message": "No relevant documents found for the question.",
+                "http_status": None,
+                "answer": "",
+                "citations": [],
+            }
+        
+    
     messages: List[Dict[str, Any]] = []
 
     if chat_history:
